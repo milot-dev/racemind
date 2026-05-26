@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.rag_service import answer_question
+from app.services.ai_service import generate_commentary
 
 from app.models.schemas import ChatRequest, CommentaryRequest, PredictionRequest
 from app.services.data_service import (
@@ -78,16 +79,7 @@ def ai_chat(request: ChatRequest):
 
 @app.post("/ai/commentary")
 def ai_commentary(request: CommentaryRequest):
-    return {
-        "commentary": (
-            f"{request.rider} lines up the moment at {request.race}. "
-            f"{request.scenario}. "
-            "The pace, the pressure, and the racecraft all come together in a classic MotoGP-style performance."
-        ),
-        "style": request.style,
-        "rider": request.rider
-    }
-
+    return generate_commentary(request)
 
 @app.post("/ml/predict")
 def ml_predict(request: PredictionRequest):
