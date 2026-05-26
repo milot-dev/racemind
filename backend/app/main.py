@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.rag_service import answer_question
 from app.services.ai_service import generate_commentary
+from app.services.ml_service import predict_performance
 
 from app.models.schemas import ChatRequest, CommentaryRequest, PredictionRequest
 from app.services.data_service import (
@@ -83,13 +84,4 @@ def ai_commentary(request: CommentaryRequest):
 
 @app.post("/ml/predict")
 def ml_predict(request: PredictionRequest):
-    return {
-        "prediction": "Average",
-        "confidence": 0.50,
-        "probabilities": {
-            "Strong": 0.25,
-            "Average": 0.50,
-            "Poor": 0.25
-        },
-        "note": "Temporary mock prediction. Train the ML model later to enable real predictions."
-    }
+    return predict_performance(request)

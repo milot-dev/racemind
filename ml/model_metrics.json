@@ -1,0 +1,73 @@
+{
+  "accuracy": 0.6106060606060606,
+  "classes": [
+    "Average",
+    "Poor",
+    "Strong"
+  ],
+  "classification_report": {
+    "Average": {
+      "precision": 0.4859437751004016,
+      "recall": 0.5789473684210527,
+      "f1-score": 0.5283842794759825,
+      "support": 209.0
+    },
+    "Poor": {
+      "precision": 0.7923875432525952,
+      "recall": 0.6325966850828729,
+      "f1-score": 0.7035330261136713,
+      "support": 362.0
+    },
+    "Strong": {
+      "precision": 0.4344262295081967,
+      "recall": 0.5955056179775281,
+      "f1-score": 0.5023696682464455,
+      "support": 89.0
+    },
+    "accuracy": 0.6106060606060606,
+    "macro avg": {
+      "precision": 0.5709191826203978,
+      "recall": 0.6023498904938179,
+      "f1-score": 0.5780956579453664,
+      "support": 660.0
+    },
+    "weighted avg": {
+      "precision": 0.6470764758782619,
+      "recall": 0.6106060606060606,
+      "f1-score": 0.6209426823296409,
+      "support": 660.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      121,
+      51,
+      37
+    ],
+    [
+      101,
+      229,
+      32
+    ],
+    [
+      27,
+      9,
+      53
+    ]
+  ],
+  "feature_columns": [
+    "year",
+    "event_name",
+    "circuit",
+    "rider",
+    "team",
+    "session_type"
+  ],
+  "target": "performance_class",
+  "target_rules": {
+    "Strong": "finish_position <= 3",
+    "Average": "finish_position <= 10",
+    "Poor": "DNF/DNS/RET/DSQ/NC/missing finish or finish_position > 10"
+  },
+  "dataset_rows_used": 3298
+}
