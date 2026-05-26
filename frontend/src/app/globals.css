@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --background: #030303;
+  --foreground: #ededed;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(220, 38, 38, 0.15), transparent 35%),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.06), transparent 25%),
+    var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline: none;
+}
