@@ -129,7 +129,7 @@ useEffect(() => {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <section className="rounded-3xl border border-red-500/20 bg-gradient-to-br from-zinc-950 via-black to-red-950/30 p-8 shadow-2xl">
+      <section className="rounded-3xl border border-red-500/20 bg-linear-to-br from-zinc-950 via-black to-red-950/30 p-8 shadow-2xl">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-400">
           ML Performance Predictor
         </p>
