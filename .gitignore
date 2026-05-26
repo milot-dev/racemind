@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+
+# Data
+data/raw/
+*.zip
+
+# ML artifacts
+ml/model.pkl
+ml/*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kaggle
+kaggle.json
