@@ -55,7 +55,7 @@ export default function Home() {
               {badges.map((badge) => (
                 <span
                   key={badge}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-zinc-300"
+                  className="rounded-full border border-white/10 bg-white/4 px-4 py-2 text-sm text-zinc-300"
                 >
                   {badge}
                 </span>
@@ -86,7 +86,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl">
+          <div className="rounded-3xl border border-white/10 bg-white/4 p-6 shadow-2xl">
             <div className="rounded-2xl bg-black/70 p-6">
               <p className="text-sm uppercase tracking-[0.3em] text-red-400">
                 Race Intelligence
@@ -108,7 +108,7 @@ export default function Home() {
                 ].map((item) => (
                   <div
                     key={item}
-                    className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-300"
+                    className="rounded-xl border border-white/10 bg-white/3 p-4 text-sm text-zinc-300"
                   >
                     {item}
                   </div>
@@ -125,7 +125,7 @@ export default function Home() {
             return (
               <div
                 key={feature.title}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:border-red-500/50"
+                className="rounded-2xl border border-white/10 bg-white/4 p-6 transition hover:border-red-500/50"
               >
                 <Icon className="text-red-500" size={28} />
                 <h3 className="mt-5 text-xl font-bold text-white">{feature.title}</h3>

@@ -127,7 +127,7 @@ export default function ComparePage() {
           </p>
         </div>
 
-        <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+        <section className="rounded-2xl border border-white/10 bg-white/4 p-6">
           {loadingRiders ? (
             <p className="text-zinc-300">Loading riders...</p>
           ) : (
@@ -162,7 +162,7 @@ export default function ComparePage() {
         )}
 
         {loadingComparison && (
-          <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+          <div className="mt-8 rounded-2xl border border-white/10 bg-white/4 p-6">
             <p className="text-zinc-300">Comparing riders...</p>
           </div>
         )}
@@ -174,12 +174,12 @@ export default function ComparePage() {
               <RiderStatsCard stats={comparison.rider_b} />
             </section>
 
-            <section className="mt-8 min-w-0 rounded-2xl border border-red-500/20 bg-gradient-to-br from-zinc-950 via-black to-red-950/30 p-6">
+            <section className="mt-8 min-w-0 rounded-2xl border border-red-500/20 bg-linear-to-br from-zinc-950 via-black to-red-950/30 p-6">
             <h2 className="text-2xl font-bold text-white">
                 Metric Comparison
             </h2>
 
-            <div className="mt-6 h-[360px] min-h-[360px] w-full min-w-0 overflow-hidden">
+            <div className="mt-6 h-90 min-h-90 w-full min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height={360}>
                 <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
@@ -283,7 +283,7 @@ export default function ComparePage() {
         )}
 
         {!comparison && !loadingComparison && !error && (
-          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/4 p-6">
             <p className="text-zinc-400">
               Select two riders to generate a side-by-side comparison.
             </p>

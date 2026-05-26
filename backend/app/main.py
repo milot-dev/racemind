@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.rag_service import answer_question
 
 from app.models.schemas import ChatRequest, CommentaryRequest, PredictionRequest
 from app.services.data_service import (
@@ -73,15 +74,7 @@ def compare(
 
 @app.post("/ai/chat")
 def ai_chat(request: ChatRequest):
-    return {
-        "answer": (
-            "This is a temporary mock RAG answer. "
-            f"You asked: '{request.question}'. "
-            "Later this endpoint will retrieve context from the MotoGP knowledge base."
-        ),
-        "sources": []
-    }
-
+    return answer_question(request.question)
 
 @app.post("/ai/commentary")
 def ai_commentary(request: CommentaryRequest):

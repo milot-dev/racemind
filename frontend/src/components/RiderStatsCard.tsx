@@ -29,7 +29,7 @@ type RiderStatsCardProps = {
 
 export default function RiderStatsCard({ stats }: RiderStatsCardProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-xl">
+    <div className="rounded-2xl border border-white/10 bg-white/4 p-6 shadow-xl">
       <div>
         <p className="text-sm uppercase tracking-[0.25em] text-red-400">
           Rider Profile

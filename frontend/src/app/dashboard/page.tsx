@@ -77,10 +77,10 @@ export default function DashboardPage() {
           <StatCard label="Rows Analyzed" value={data.total_rows} />
         </div>
 
-        <section className="mt-10 min-w-0 rounded-2xl border border-red-500/20 bg-gradient-to-br from-zinc-950 via-black to-red-950/30 p-6">
+        <section className="mt-10 min-w-0 rounded-2xl border border-red-500/20 bg-linear-to-br from-zinc-950 via-black to-red-950/30 p-6">
         <h2 className="text-2xl font-bold text-white">Top Points Riders</h2>
 
-        <div className="mt-6 h-[360px] min-h-[360px] w-full min-w-0">
+        <div className="mt-6 h-90 min-h-90 w-full min-w-0">
             <ResponsiveContainer width="100%" height={360}>
             <BarChart data={data.top_points_riders}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
@@ -158,7 +158,7 @@ function LeaderboardTable({
   valueLabel: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+    <div className="rounded-2xl border border-white/10 bg-white/4 p-6">
       <h3 className="text-xl font-bold text-white">{title}</h3>
 
       <div className="mt-5 space-y-3">
