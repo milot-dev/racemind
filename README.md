@@ -192,8 +192,8 @@ racemind_ai/
 │
 ├── docs/
 │   ├── architecture.md
-│   ├── demo_script.md
-│   └── screenshots/
+│ 
+│   
 │
 ├── README.md
 └── .gitignore
@@ -429,38 +429,6 @@ session_type
 ```
 
 `grid_position` is not used yet because it is missing in the current Race.csv-based cleaned dataset.
-
----
-
-## Screenshots
-
-Add screenshots to:
-
-```txt
-docs/screenshots/
-```
-
-Recommended screenshots:
-
-```txt
-landing.png
-dashboard.png
-compare.png
-assistant.png
-commentator.png
-predict.png
-```
-
-Then add them here after you capture them:
-
-```md
-![Landing Page](docs/screenshots/landing.png)
-![Dashboard](docs/screenshots/dashboard.png)
-![Rider Comparison](docs/screenshots/compare.png)
-![RAG Assistant](docs/screenshots/assistant.png)
-![Commentary Generator](docs/screenshots/commentator.png)
-![ML Predictor](docs/screenshots/predict.png)
-```
 
 ---
 
