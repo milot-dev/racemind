@@ -371,18 +371,23 @@ ml/model_metrics.json
 
 ## RAG Assistant
 
-The RAG assistant uses markdown files from:
+RaceMind AI includes a retrieval-augmented generation assistant for MotoGP and motorcycle racing questions.
+
+The assistant reads local markdown files from the `knowledge_base/` folder, splits them into chunks, creates local embeddings using `sentence-transformers`, and retrieves the most relevant chunks using cosine similarity.
+
+If an `OPENAI_API_KEY` is available, the retrieved context is passed to an OpenAI chat model to generate a natural answer.
+
+If no API key is configured, the assistant still works using a local fallback answer based on the most relevant retrieved context.
+
+Current RAG flow:
 
 ```txt
-knowledge_base/
-```
-
-For the MVP, it uses keyword-based retrieval.
-
-If `OPENAI_API_KEY` exists, it can use an LLM to generate answers from retrieved context.
-
-If no API key exists, it returns a local fallback answer based on the best retrieved context.
-
+User question
+→ local embedding
+→ cosine similarity search
+→ top knowledge base chunks
+→ OpenAI answer or local fallback
+→ answer with source files
 ---
 
 ## AI Commentary Generator
@@ -441,7 +446,7 @@ Current limitations:
 - no live MotoGP data integration
 - no lap-time telemetry
 - Some grid positions may still be missing because of naming differences between raw files.
-- RAG uses keyword retrieval instead of embeddings
+- RAG uses local sentence-transformer embeddings and cosine similarity. It does not yet use a persistent vector database such as ChromaDB or FAISS.
 - model is simple and trained only on historical result-level data
 - commentary does not verify official race facts unless provided in the prompt
 
