@@ -120,24 +120,12 @@ Column meaning:
 
 ---
 
-## Current Known Limitation
+## Grid Position
 
-`grid_position` is currently empty because the race result file does not include starting grid position.
-
-A future improvement is to join `Race.csv` with `Qualifying.csv` using:
+`grid_position` is populated by joining `Race.csv` with `Qualifying.csv` using normalized keys:
 
 ```txt
-year + event + class + rider
-```
-
-This would allow RaceMind AI to include starting grid position in:
-
-- rider comparison
-- dashboard analysis
-- machine learning features
-- performance prediction explanations
-
----
+year + series + event_name + rider
 
 ## How To Regenerate The Processed Dataset
 

@@ -440,7 +440,7 @@ Current limitations:
 
 - no live MotoGP data integration
 - no lap-time telemetry
-- grid position is missing from the current processed Race.csv data
+- Some grid positions may still be missing because of naming differences between raw files.
 - RAG uses keyword retrieval instead of embeddings
 - model is simple and trained only on historical result-level data
 - commentary does not verify official race facts unless provided in the prompt

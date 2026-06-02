@@ -104,6 +104,7 @@ def main():
         "circuit",
         "rider",
         "team",
+        "grid_position",
         "session_type",
     ]
 
@@ -124,6 +125,9 @@ def main():
 
     df_model["year"] = df_model["year"].astype(int)
 
+    df["grid_position"] = pd.to_numeric(df["grid_position"], errors="coerce")
+    df["grid_position"] = df["grid_position"].fillna(99)
+    
     print(f"Rows after cleaning: {len(df_model)}")
     print("\nTarget distribution:")
     print(df_model["performance_class"].value_counts())
