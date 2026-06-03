@@ -40,59 +40,66 @@ def load_model_metrics():
         return {}
 
 
-def build_prediction_explanation(prediction: str, confidence: float) -> dict:
+def build_prediction_explanation(input_data, prediction, confidence, probabilities):
     metrics = load_model_metrics()
 
     importance_data = metrics.get("feature_importance", {})
-    grouped_importance = importance_data.get("grouped", [])
 
-    top_features = grouped_importance[:5]
+    if isinstance(importance_data, dict):
+        feature_importance = importance_data.get("grouped", [])
+    else:
+        # Backward compatibility with old list format
+        feature_importance = importance_data
 
-    readable = []
+    top_features = feature_importance[:5]
+
+    readable_features = []
 
     for item in top_features:
-        feature = item.get("feature", "")
+        feature_name = item.get("feature", "")
 
-        if feature == "grid_position":
-            readable.append("starting grid position")
-        elif feature == "year":
-            readable.append("season/year")
-        elif feature == "rider":
-            readable.append("rider history")
-        elif feature == "team":
-            readable.append("team")
-        elif feature == "event_name":
-            readable.append("event")
-        elif feature == "circuit":
-            readable.append("circuit")
-        elif feature == "session_type":
-            readable.append("session type")
+        if feature_name == "rider" or feature_name.startswith("rider_"):
+            readable_features.append("rider history")
+        elif feature_name == "team" or feature_name.startswith("team_"):
+            readable_features.append("team")
+        elif feature_name == "event_name" or feature_name.startswith("event_name_"):
+            readable_features.append("event")
+        elif feature_name == "circuit" or feature_name.startswith("circuit_"):
+            readable_features.append("circuit")
+        elif feature_name == "session_type" or feature_name.startswith("session_type_"):
+            readable_features.append("session type")
+        elif feature_name == "grid_position":
+            readable_features.append("grid position")
+        elif feature_name == "year":
+            readable_features.append("season/year")
         else:
-            readable.append(feature)
+            readable_features.append(feature_name)
 
-    if not readable:
-        readable = [
+    readable_features = list(dict.fromkeys(readable_features))
+
+    if not readable_features:
+        readable_features = [
             "rider history",
             "team",
             "event",
             "session type",
-            "starting grid position",
+            "grid position",
         ]
 
-    return {
-        "summary": (
-            f"The model predicted {prediction} with {confidence:.0%} confidence. "
-            f"The main historical factors considered were {', '.join(readable[:5])}. "
-            "This explanation is based on RandomForest feature importance and is for portfolio/demo purposes."
-        ),
-        "top_factors": readable[:5],
-        "important_features": top_features,
-        "model_note": (
-            "RandomForestClassifier trained on historical MotoGP results. "
-            "This is not an official MotoGP forecast."
-        ),
-    }
+    explanation_text = (
+        f"The model predicted {prediction} with {confidence:.0%} confidence. "
+        f"The main historical factors considered were "
+        f"{', '.join(readable_features[:5])}. "
+        f"The confidence score is based on RandomForest class probabilities. "
+        f"This is a portfolio/demo prediction, not an official MotoGP forecast."
+    )
 
+    return {
+        "summary": explanation_text,
+        "top_factors": readable_features[:5],
+        "model_note": "RandomForestClassifier trained on historical MotoGP race result features.",
+        "important_features": top_features,
+    }
 
 def predict_performance(input_data: Any) -> dict:
     model = load_model()
@@ -143,8 +150,10 @@ def predict_performance(input_data: Any) -> dict:
         confidence = round(float(max(proba)), 4)
     
     explanation = build_prediction_explanation(
-        prediction=str(prediction),
+        input_data=input_data,
+        prediction=prediction,
         confidence=confidence,
+        probabilities=probabilities
     )
 
     return {
