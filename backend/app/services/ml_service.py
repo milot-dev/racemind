@@ -3,11 +3,12 @@ from functools import lru_cache
 from typing import Any
 import joblib
 import pandas as pd
+import json
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MODEL_PATH = PROJECT_ROOT / "ml" / "model.pkl"
-
+METRICS_PATH = PROJECT_ROOT / "ml" / "model_metrics.json"
 
 FEATURE_COLUMNS = [
     "year",
@@ -15,6 +16,7 @@ FEATURE_COLUMNS = [
     "circuit",
     "rider",
     "team",
+    "grid_position",
     "session_type",
 ]
 
@@ -25,6 +27,71 @@ def load_model():
         return None
 
     return joblib.load(MODEL_PATH)
+
+@lru_cache(maxsize=1)
+def load_model_metrics():
+    if not METRICS_PATH.exists():
+        return {}
+
+    try:
+        with open(METRICS_PATH, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except Exception:
+        return {}
+
+
+def build_prediction_explanation(prediction: str, confidence: float) -> dict:
+    metrics = load_model_metrics()
+
+    importance_data = metrics.get("feature_importance", {})
+    grouped_importance = importance_data.get("grouped", [])
+
+    top_features = grouped_importance[:5]
+
+    readable = []
+
+    for item in top_features:
+        feature = item.get("feature", "")
+
+        if feature == "grid_position":
+            readable.append("starting grid position")
+        elif feature == "year":
+            readable.append("season/year")
+        elif feature == "rider":
+            readable.append("rider history")
+        elif feature == "team":
+            readable.append("team")
+        elif feature == "event_name":
+            readable.append("event")
+        elif feature == "circuit":
+            readable.append("circuit")
+        elif feature == "session_type":
+            readable.append("session type")
+        else:
+            readable.append(feature)
+
+    if not readable:
+        readable = [
+            "rider history",
+            "team",
+            "event",
+            "session type",
+            "starting grid position",
+        ]
+
+    return {
+        "summary": (
+            f"The model predicted {prediction} with {confidence:.0%} confidence. "
+            f"The main historical factors considered were {', '.join(readable[:5])}. "
+            "This explanation is based on RandomForest feature importance and is for portfolio/demo purposes."
+        ),
+        "top_factors": readable[:5],
+        "important_features": top_features,
+        "model_note": (
+            "RandomForestClassifier trained on historical MotoGP results. "
+            "This is not an official MotoGP forecast."
+        ),
+    }
 
 
 def predict_performance(input_data: Any) -> dict:
@@ -47,6 +114,7 @@ def predict_performance(input_data: Any) -> dict:
         "circuit": input_data.circuit,
         "rider": input_data.rider,
         "team": input_data.team,
+        "grid_position": input_data.grid_position,
         "session_type": input_data.session_type,
     }
 
@@ -67,11 +135,17 @@ def predict_performance(input_data: Any) -> dict:
         }
 
         confidence = round(float(max(proba)), 4)
+    
+    explanation = build_prediction_explanation(
+        prediction=str(prediction),
+        confidence=confidence,
+    )
 
     return {
         "prediction": str(prediction),
         "confidence": confidence,
         "probabilities": probabilities,
+        "explanation": explanation,
         "input": row,
         "message": (
             "This is a simple ML prediction based on historical MotoGP results. "

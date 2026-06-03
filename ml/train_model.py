@@ -52,6 +52,71 @@ def create_performance_class(row):
 
     return "Poor"
 
+def get_feature_importance(pipeline, numeric_features, categorical_features):
+    model = pipeline.named_steps["model"]
+    preprocessor = pipeline.named_steps["preprocessor"]
+
+    importances = model.feature_importances_
+
+    transformed_feature_names = []
+
+    transformed_feature_names.extend(numeric_features)
+
+    encoder = preprocessor.named_transformers_["categorical"]
+    encoded_names = encoder.get_feature_names_out(categorical_features)
+    transformed_feature_names.extend(encoded_names)
+
+    detailed = []
+
+    for name, importance in zip(transformed_feature_names, importances):
+        detailed.append({
+            "feature": str(name),
+            "importance": float(importance),
+        })
+
+    detailed = sorted(
+        detailed,
+        key=lambda item: item["importance"],
+        reverse=True,
+    )
+
+    grouped = {}
+
+    for item in detailed:
+        feature_name = item["feature"]
+        importance = item["importance"]
+
+        if feature_name in numeric_features:
+            group_name = feature_name
+        else:
+            group_name = feature_name
+
+            for categorical_feature in categorical_features:
+                prefix = f"{categorical_feature}_"
+                if feature_name.startswith(prefix):
+                    group_name = categorical_feature
+                    break
+
+        grouped[group_name] = grouped.get(group_name, 0.0) + importance
+
+    grouped_list = [
+        {
+            "feature": feature,
+            "importance": float(importance),
+        }
+        for feature, importance in grouped.items()
+    ]
+
+    grouped_list = sorted(
+        grouped_list,
+        key=lambda item: item["importance"],
+        reverse=True,
+    )
+
+    return {
+        "grouped": grouped_list,
+        "detailed_top_25": detailed[:25],
+    }
 
 def main():
     if not DATA_PATH.exists():
@@ -125,8 +190,10 @@ def main():
 
     df_model["year"] = df_model["year"].astype(int)
 
-    df["grid_position"] = pd.to_numeric(df["grid_position"], errors="coerce")
-    df["grid_position"] = df["grid_position"].fillna(99)
+    df_model["grid_position"] = pd.to_numeric(
+        df_model["grid_position"],
+        errors="coerce"
+    ).fillna(99)
     
     print(f"Rows after cleaning: {len(df_model)}")
     print("\nTarget distribution:")
@@ -161,7 +228,7 @@ def main():
         "session_type",
     ]
 
-    numeric_features = ["year"]
+    numeric_features = ["year", "grid_position"]
 
     preprocessor = ColumnTransformer(
         transformers=[
@@ -199,6 +266,12 @@ def main():
     print("Evaluating model...")
     y_pred = pipeline.predict(X_test)
 
+    feature_importance = get_feature_importance(
+        pipeline,
+        numeric_features=numeric_features,
+        categorical_features=categorical_features
+    )
+
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
     matrix = confusion_matrix(y_test, y_pred, labels=pipeline.classes_)
@@ -209,6 +282,9 @@ def main():
         "classification_report": report,
         "confusion_matrix": matrix.tolist(),
         "feature_columns": feature_columns,
+        "numeric_features": numeric_features,
+        "categorical_features": categorical_features,
+        "feature_importance": feature_importance,
         "target": "performance_class",
         "target_rules": {
             "Strong": "finish_position <= 3",

@@ -1,5 +1,5 @@
 {
-  "accuracy": 0.6424242424242425,
+  "accuracy": 0.6590909090909091,
   "classes": [
     "Average",
     "Poor",
@@ -7,52 +7,52 @@
   ],
   "classification_report": {
     "Average": {
-      "precision": 0.5163934426229508,
-      "recall": 0.6028708133971292,
-      "f1-score": 0.5562913907284768,
+      "precision": 0.5190839694656488,
+      "recall": 0.6507177033492823,
+      "f1-score": 0.5774946921443737,
       "support": 209.0
     },
     "Poor": {
-      "precision": 0.8078175895765473,
-      "recall": 0.6850828729281768,
-      "f1-score": 0.7414050822122571,
+      "precision": 0.8408304498269896,
+      "recall": 0.6712707182320442,
+      "f1-score": 0.7465437788018433,
       "support": 362.0
     },
     "Strong": {
-      "precision": 0.45871559633027525,
-      "recall": 0.5617977528089888,
-      "f1-score": 0.5050505050505051,
+      "precision": 0.5137614678899083,
+      "recall": 0.6292134831460674,
+      "f1-score": 0.5656565656565656,
       "support": 89.0
     },
-    "accuracy": 0.6424242424242425,
+    "accuracy": 0.6590909090909091,
     "macro avg": {
-      "precision": 0.5943088761765911,
-      "recall": 0.616583813044765,
-      "f1-score": 0.600915659330413,
+      "precision": 0.6245586290608489,
+      "recall": 0.6504006349091312,
+      "f1-score": 0.6298983455342609,
       "support": 660.0
     },
     "weighted avg": {
-      "precision": 0.6684574015277293,
-      "recall": 0.6424242424242425,
-      "f1-score": 0.6509136899584601,
+      "precision": 0.6948393077240799,
+      "recall": 0.6590909090909091,
+      "f1-score": 0.6686192014058723,
       "support": 660.0
     }
   },
   "confusion_matrix": [
     [
-      126,
-      53,
-      30
+      136,
+      42,
+      31
     ],
     [
-      85,
-      248,
-      29
+      97,
+      243,
+      22
     ],
     [
-      33,
-      6,
-      50
+      29,
+      4,
+      56
     ]
   ],
   "feature_columns": [
@@ -64,6 +64,151 @@
     "grid_position",
     "session_type"
   ],
+  "numeric_features": [
+    "year",
+    "grid_position"
+  ],
+  "categorical_features": [
+    "event_name",
+    "circuit",
+    "rider",
+    "team",
+    "session_type"
+  ],
+  "feature_importance": {
+    "grouped": [
+      {
+        "feature": "team",
+        "importance": 0.30267872924226874
+      },
+      {
+        "feature": "rider",
+        "importance": 0.28544449098596136
+      },
+      {
+        "feature": "session_type",
+        "importance": 0.16756876832487463
+      },
+      {
+        "feature": "event_name",
+        "importance": 0.12362043917196767
+      },
+      {
+        "feature": "circuit",
+        "importance": 0.10918866706202511
+      },
+      {
+        "feature": "year",
+        "importance": 0.006703948266359022
+      },
+      {
+        "feature": "grid_position",
+        "importance": 0.00479495694654344
+      }
+    ],
+    "detailed_top_25": [
+      {
+        "feature": "session_type_Race",
+        "importance": 0.16756876832487463
+      },
+      {
+        "feature": "team_CASTROL Honda LCR",
+        "importance": 0.06079853908054354
+      },
+      {
+        "feature": "team_Yamalube RS4GP Racing Team",
+        "importance": 0.050679162941127676
+      },
+      {
+        "feature": "rider_L. Savadori",
+        "importance": 0.03137875411250985
+      },
+      {
+        "feature": "rider_I. Lecuona",
+        "importance": 0.03022816514671778
+      },
+      {
+        "feature": "rider_E. Bastianini",
+        "importance": 0.02696386086844369
+      },
+      {
+        "feature": "team_Pertamina Enduro VR46 MotoGP Team",
+        "importance": 0.02159984853632879
+      },
+      {
+        "feature": "team_Aprilia Racing",
+        "importance": 0.020029764715702787
+      },
+      {
+        "feature": "team_Red Bull KTM Factory Racing",
+        "importance": 0.018119366558381485
+      },
+      {
+        "feature": "team_Prima Pramac Yamaha MotoGP",
+        "importance": 0.015690798317740794
+      },
+      {
+        "feature": "team_Mooney VR46 Racing Team",
+        "importance": 0.014662524699469777
+      },
+      {
+        "feature": "rider_J. Zarco",
+        "importance": 0.013592091275866849
+      },
+      {
+        "feature": "rider_T. Nakagami",
+        "importance": 0.013462202590928674
+      },
+      {
+        "feature": "team_Honda HRC Castrol",
+        "importance": 0.011375593192535205
+      },
+      {
+        "feature": "rider_A. Fernandez",
+        "importance": 0.011368256597489705
+      },
+      {
+        "feature": "rider_F. Giannantonio",
+        "importance": 0.01116732003657358
+      },
+      {
+        "feature": "team_Ducati Lenovo Team",
+        "importance": 0.0109793401113058
+      },
+      {
+        "feature": "rider_D. Pedrosa",
+        "importance": 0.009810044335156044
+      },
+      {
+        "feature": "rider_S. Chantra",
+        "importance": 0.00971271091833139
+      },
+      {
+        "feature": "rider_L. Marini",
+        "importance": 0.009171723627706503
+      },
+      {
+        "feature": "rider_M. Vi\u00f1ales",
+        "importance": 0.009123830501000232
+      },
+      {
+        "feature": "circuit_AUS",
+        "importance": 0.009074417878122444
+      },
+      {
+        "feature": "rider_A. Dovizioso",
+        "importance": 0.008944396374975327
+      },
+      {
+        "feature": "event_name_AUS",
+        "importance": 0.008618172491734195
+      },
+      {
+        "feature": "event_name_GER",
+        "importance": 0.007946906374437238
+      }
+    ]
+  },
   "target": "performance_class",
   "target_rules": {
     "Strong": "finish_position <= 3",

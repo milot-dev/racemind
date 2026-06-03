@@ -465,7 +465,6 @@ Planned improvements:
 7. Add Isle of Man TT knowledge base.
 8. Add user-uploaded race CSV analysis.
 9. Add text-to-speech commentary.
-10. Deploy frontend and backend.
 
 ---
 
