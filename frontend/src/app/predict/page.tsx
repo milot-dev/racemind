@@ -7,6 +7,15 @@ type PredictionResponse = {
   prediction: string;
   confidence: number;
   probabilities: Record<string, number>;
+  explanation?: {
+    summary: string;
+    top_factors: string[];
+    important_features: {
+      feature: string;
+      importance: number;
+    }[];
+    model_note: string;
+  };
   input?: {
     year: number;
     event_name: string;
@@ -298,6 +307,67 @@ useEffect(() => {
               >
                 {result.prediction}
               </div>
+
+              {result?.explanation && (
+              <div className="mt-6 rounded-2xl border border-red-500/20 bg-zinc-950 p-5">
+                <h3 className="text-lg font-bold text-white">
+                  Prediction Explanation
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-zinc-300">
+                  {result.explanation.summary}
+                </p>
+
+                {result.explanation.top_factors?.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-semibold text-zinc-200">
+                      Main factors:
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {result.explanation.top_factors.map((factor: string) => (
+                        <span
+                          key={factor}
+                          className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs text-red-200"
+                        >
+                          {factor}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.explanation.important_features?.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-sm font-semibold text-zinc-200">
+                      Feature importance:
+                    </p>
+
+                    <div className="mt-3 space-y-2">
+                      {result.explanation.important_features.map(
+                        (item: { feature: string; importance: number }) => (
+                          <div
+                            key={item.feature}
+                            className="flex items-center justify-between rounded-lg border border-zinc-800 bg-black/40 px-3 py-2 text-sm"
+                          >
+                            <span className="text-zinc-300">
+                              {item.feature}
+                            </span>
+                            <span className="font-semibold text-red-300">
+                              {(item.importance * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <p className="mt-4 text-xs text-zinc-500">
+                  {result.explanation.model_note}
+                </p>
+              </div>
+            )}
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">

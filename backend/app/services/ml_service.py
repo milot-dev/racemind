@@ -120,6 +120,12 @@ def predict_performance(input_data: Any) -> dict:
 
     df = pd.DataFrame([row], columns=FEATURE_COLUMNS)
 
+    df["year"] = pd.to_numeric(df["year"], errors="coerce").fillna(2025).astype(int)
+    df["grid_position"] = pd.to_numeric(df["grid_position"], errors="coerce").fillna(99)
+
+    for col in ["event_name", "circuit", "rider", "team", "session_type"]:
+        df[col] = df[col].fillna("Unknown").replace("", "Unknown").astype(str)
+
     prediction = model.predict(df)[0]
 
     probabilities = {}
@@ -146,7 +152,7 @@ def predict_performance(input_data: Any) -> dict:
         "confidence": confidence,
         "probabilities": probabilities,
         "explanation": explanation,
-        "input": row,
+        "input": df.iloc[0].to_dict(),
         "message": (
             "This is a simple ML prediction based on historical MotoGP results. "
             "It is for portfolio/demo purposes, not an official race forecast."
