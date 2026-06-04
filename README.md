@@ -2,25 +2,27 @@
 
 RaceMind AI is a full-stack GenAI and ML-powered MotoGP intelligence platform.
 
-It analyzes real MotoGP race result data, compares riders, answers racing questions using RAG, generates AI race commentary, and predicts rider performance using machine learning.
+It analyzes real MotoGP race result data, compares riders, provides rider and race detail pages, answers racing questions using RAG, generates AI race commentary, and predicts rider performance using machine learning.
 
 ---
 
 ## Project Overview
 
-RaceMind AI was built as an AI Engineer portfolio project.
+RaceMind AI was built as an AI Engineering portfolio project.
 
 The project demonstrates:
 
 - data preprocessing
-- backend API development
+- backend API development with FastAPI
 - dashboard analytics
-- frontend integration
+- frontend integration with Next.js
 - retrieval-augmented generation
+- local vector search with sentence-transformers
 - prompt engineering
 - AI commentary generation
 - classical machine learning
 - model serving
+- lightweight model explainability
 
 ---
 
@@ -39,6 +41,82 @@ Explore real MotoGP race result data with:
 - podium leaders
 - average finish leaders
 
+Route:
+
+```txt
+/dashboard
+```
+
+### Riders Page
+
+Browse all riders from the cleaned dataset.
+
+Route:
+
+```txt
+/riders
+```
+
+Clicking a rider opens their dedicated profile page.
+
+### Rider Profile Pages
+
+Each rider profile shows:
+
+- total points
+- wins
+- podiums
+- DNFs
+- team history
+- yearly performance trends
+- recent results
+
+Route:
+
+```txt
+/rider/[name]
+```
+
+Example:
+
+```txt
+/rider/M.%20Marquez
+```
+
+### Races Page
+
+Browse all available races from the cleaned dataset.
+
+Route:
+
+```txt
+/races
+```
+
+Clicking a race opens its detail page.
+
+### Race Detail Pages
+
+Each race detail page shows:
+
+- race/session summary
+- podium
+- team points
+- full results table
+- generated race summary
+
+Route:
+
+```txt
+/race/[year]/[event]
+```
+
+Example:
+
+```txt
+/race/2025/QAT
+```
+
 ### Rider Comparison
 
 Compare two riders by:
@@ -51,9 +129,23 @@ Compare two riders by:
 - average finish
 - consistency
 
+Route:
+
+```txt
+/compare
+```
+
 ### RAG Racing Assistant
 
 Ask motorcycle racing questions grounded in a local knowledge base.
+
+The assistant uses:
+
+- local markdown knowledge base
+- sentence-transformers embeddings
+- cosine similarity retrieval
+- local fallback answer
+- optional OpenAI generation if an API key is configured
 
 Example questions:
 
@@ -62,6 +154,12 @@ What is race pace?
 Why is qualifying important in MotoGP?
 Explain tire degradation.
 What makes a rider consistent?
+```
+
+Route:
+
+```txt
+/assistant
 ```
 
 ### AI Commentary Generator
@@ -78,6 +176,12 @@ social media caption
 beginner-friendly explanation
 ```
 
+Route:
+
+```txt
+/commentator
+```
+
 ### ML Performance Predictor
 
 Predict whether a rider performance will be:
@@ -88,7 +192,20 @@ Average
 Poor
 ```
 
-The model is trained on historical MotoGP race result features.
+The model is trained on historical MotoGP race result features and returns:
+
+- prediction
+- confidence
+- probability breakdown
+- explanation summary
+- top model factors
+- feature importance
+
+Route:
+
+```txt
+/predict
+```
 
 ---
 
@@ -110,6 +227,7 @@ The model is trained on historical MotoGP race result features.
 - pydantic
 - scikit-learn
 - joblib
+- sentence-transformers
 - optional OpenAI API
 
 ### Data and ML
@@ -117,7 +235,9 @@ The model is trained on historical MotoGP race result features.
 - Kaggle MotoGP Race Results dataset
 - cleaned CSV data pipeline
 - RandomForestClassifier
+- OneHotEncoder
 - model metrics saved as JSON
+- lightweight feature-importance explanation
 
 ---
 
@@ -136,7 +256,7 @@ Dataset link:
 https://www.kaggle.com/datasets/sammee/motogp-race-results-2022
 ```
 
-For the MVP, the dataset is cleaned and filtered mainly for MotoGP class analysis.
+The project uses `Race.csv` and `Qualifying.csv`.
 
 The processed dataset is stored at:
 
@@ -153,6 +273,22 @@ The raw Kaggle files are not committed to GitHub.
 ```txt
 racemind_ai/
 ├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx
+│   │   │   ├── dashboard/page.tsx
+│   │   │   ├── riders/page.tsx
+│   │   │   ├── rider/[name]/page.tsx
+│   │   │   ├── races/page.tsx
+│   │   │   ├── race/[year]/[event]/page.tsx
+│   │   │   ├── compare/page.tsx
+│   │   │   ├── assistant/page.tsx
+│   │   │   ├── commentator/page.tsx
+│   │   │   └── predict/page.tsx
+│   │   ├── components/
+│   │   └── lib/api.ts
+│   └── package.json
+│
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
@@ -161,14 +297,16 @@ racemind_ai/
 │   │   │   └── schemas.py
 │   │   └── services/
 │   │       ├── data_service.py
-│   │       ├── ai_service.py
 │   │       ├── rag_service.py
+│   │       ├── ai_service.py
 │   │       └── ml_service.py
 │   ├── requirements.txt
 │   └── .env.example
 │
 ├── data/
 │   ├── raw/
+│   │   ├── Race.csv
+│   │   └── Qualifying.csv
 │   ├── processed/
 │   │   └── race_results_clean.csv
 │   └── README.md
@@ -188,12 +326,11 @@ racemind_ai/
 │   ├── motogp_basics.md
 │   ├── race_strategy.md
 │   ├── rider_profiles.md
+│   ├── isle_of_man_tt.md
 │   └── glossary.md
 │
 ├── docs/
-│   ├── architecture.md
-│ 
-│   
+│   └── architecture.md
 │
 ├── README.md
 └── .gitignore
@@ -245,9 +382,12 @@ GET /health
 
 ```txt
 GET /riders
+GET /races
 GET /events
 GET /dashboard
 GET /stats/rider/{rider_name}
+GET /stats/rider/{rider_name}/trends
+GET /race/{year}/{event_name}
 GET /compare?rider_a=...&rider_b=...
 ```
 
@@ -329,7 +469,14 @@ Download the Kaggle dataset into:
 data/raw/
 ```
 
-Then run:
+Expected files:
+
+```txt
+data/raw/Race.csv
+data/raw/Qualifying.csv
+```
+
+Then run from the project root:
 
 ```bash
 python scripts/inspect_dataset.py
@@ -342,19 +489,13 @@ This creates:
 data/processed/race_results_clean.csv
 ```
 
+`grid_position` is populated by joining `Race.csv` with `Qualifying.csv` where matching rows are available.
+
 ---
 
 ## ML Training
 
-Install dependencies:
-
-```bash
-cd backend
-pip install scikit-learn joblib
-pip freeze > requirements.txt
-```
-
-Train the model from project root:
+Train the model from the project root:
 
 ```bash
 python ml/train_model.py
@@ -367,46 +508,7 @@ ml/model.pkl
 ml/model_metrics.json
 ```
 
----
-
-## RAG Assistant
-
-RaceMind AI includes a retrieval-augmented generation assistant for MotoGP and motorcycle racing questions.
-
-The assistant reads local markdown files from the `knowledge_base/` folder, splits them into chunks, creates local embeddings using `sentence-transformers`, and retrieves the most relevant chunks using cosine similarity.
-
-If an `OPENAI_API_KEY` is available, the retrieved context is passed to an OpenAI chat model to generate a natural answer.
-
-If no API key is configured, the assistant still works using a local fallback answer based on the most relevant retrieved context.
-
-Current RAG flow:
-
-```txt
-User question
-→ local embedding
-→ cosine similarity search
-→ top knowledge base chunks
-→ OpenAI answer or local fallback
-→ answer with source files
----
-
-## AI Commentary Generator
-
-The commentary generator accepts:
-
-- rider
-- race
-- scenario
-- style
-- duration seconds
-
-It can use OpenAI if an API key is configured, otherwise it returns a high-quality local fallback commentary.
-
----
-
-## ML Predictor
-
-The ML model predicts:
+The model predicts:
 
 ```txt
 Strong
@@ -430,10 +532,57 @@ event_name
 circuit
 rider
 team
+grid_position
 session_type
 ```
 
-`grid_position` is not used yet because it is missing in the current Race.csv-based cleaned dataset.
+The prediction endpoint also returns a lightweight explanation based on RandomForest feature importance.
+
+---
+
+## RAG Assistant
+
+RaceMind AI includes a retrieval-augmented generation assistant for MotoGP, motorcycle racing.
+
+The assistant reads local markdown files from:
+
+```txt
+knowledge_base/
+```
+
+It uses:
+
+- sentence-transformers
+- local embeddings
+- cosine similarity search
+- source file reporting
+- local fallback answer
+- optional OpenAI generation if configured
+
+Current RAG flow:
+
+```txt
+User question
+→ local embedding
+→ cosine similarity search
+→ top knowledge base chunks
+→ OpenAI answer or local fallback
+→ answer with source files
+```
+
+---
+
+## AI Commentary Generator
+
+The commentary generator accepts:
+
+- rider
+- race
+- scenario
+- style
+- duration seconds
+
+It can use OpenAI if an API key is configured. Otherwise, it returns a local fallback commentary.
 
 ---
 
@@ -445,31 +594,16 @@ Current limitations:
 
 - no live MotoGP data integration
 - no lap-time telemetry
-- Some grid positions may still be missing because of naming differences between raw files.
-- RAG uses local sentence-transformer embeddings and cosine similarity. It does not yet use a persistent vector database such as ChromaDB or FAISS.
-- model is simple and trained only on historical result-level data
+- no official MotoGP API integration
+- some grid positions may still be missing if raw dataset names do not match perfectly
+- RAG uses local sentence-transformer embeddings and cosine similarity, not a persistent vector database
+- the ML model is trained only on historical result-level data
 - commentary does not verify official race facts unless provided in the prompt
-
----
-
-## Future Improvements
-
-Planned improvements:
-
-1. Join qualifying data to fill grid positions.
-2. Add vector embeddings for RAG.
-3. Add ChromaDB or FAISS.
-4. Add model explainability.
-5. Add rider profile pages.
-6. Add race detail pages.
-7. Add Isle of Man TT knowledge base.
-8. Add user-uploaded race CSV analysis.
-9. Add text-to-speech commentary.
 
 ---
 
 ## Portfolio Description
 
-RaceMind AI is a full-stack GenAI and ML-powered MotoGP intelligence platform. It uses real MotoGP race results from Kaggle to provide rider analytics, comparison dashboards, a RAG-based racing assistant, AI-generated race commentary, and a machine learning performance predictor.
+RaceMind AI is a full-stack GenAI and ML-powered MotoGP intelligence platform. It uses real MotoGP race results from Kaggle to provide rider analytics, race analytics, comparison dashboards, rider profile pages, race detail pages, a RAG-based racing assistant, AI-generated race commentary, and a machine learning performance predictor with lightweight explainability.
 
-The project demonstrates practical AI engineering skills including data preprocessing, FastAPI backend development, Next.js frontend integration, retrieval-augmented generation, prompt engineering, classical ML modeling, and model serving.
+The project demonstrates practical AI engineering skills including data preprocessing, FastAPI backend development, Next.js frontend integration, retrieval-augmented generation, prompt engineering, classical ML modeling, model serving, and model explainability.
