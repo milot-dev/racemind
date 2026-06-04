@@ -14,42 +14,111 @@ KNOWLEDGE_BASE_DIR = PROJECT_ROOT / "knowledge_base"
 
 MODEL_NAME = "all-MiniLM-L6-v2"
 
+# Retrieval tuning for a small local knowledge base.
+# If answers are too strict, lower MIN_VECTOR_SCORE slightly.
+# If unrelated questions still get answers, raise it slightly.
+MIN_VECTOR_SCORE = 0.32
+MIN_KEYWORD_OVERLAP = 1
+TOP_K = 4
+
+OUT_OF_SCOPE_ANSWER = (
+    "I could not find enough relevant information in the RaceMind AI "
+    "knowledge base to answer this question yet."
+)
+
+STOPWORDS = {
+    "what", "whats", "is", "are", "am", "was", "were", "be", "being", "been",
+    "the", "a", "an", "of", "in", "on", "at", "for", "to", "from", "by", "as",
+    "and", "or", "with", "without", "into", "than", "then", "that", "this", "these",
+    "those", "it", "its", "they", "them", "their", "he", "she", "his", "her",
+    "do", "does", "did", "can", "could", "should", "would", "will", "may", "might",
+    "you", "me", "my", "your", "we", "our", "us", "i",
+    "tell", "explain", "describe", "define", "meaning", "difference", "between",
+    "about", "why", "how", "when", "where", "which", "who",
+}
+
 
 def clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def chunk_text(text: str, chunk_size: int = 600, overlap: int = 80) -> list[str]:
+def strip_markdown(text: str) -> str:
+    """Remove markdown headings/bold/list symbols from text used in final answers."""
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+    text = re.sub(r"^[-*]\s+", "", text, flags=re.MULTILINE)
+    return clean_text(text)
+
+
+def tokenize(text: str) -> set[str]:
+    terms = set()
+
+    for term in re.findall(r"[a-zA-Z0-9]+", text.lower()):
+        if term in STOPWORDS or len(term) <= 2:
+            continue
+
+        # Very small normalization to match plural/singular forms.
+        if len(term) > 4 and term.endswith("s"):
+            term = term[:-1]
+
+        terms.add(term)
+
+    return terms
+
+
+def chunk_text(text: str, chunk_size: int = 700, overlap: int = 100) -> list[dict[str, str]]:
+    """
+    Split markdown by H2 sections first.
+    Each chunk keeps a title separately so final answers can avoid repeating headings.
+    """
     text = text.strip()
 
     if not text:
         return []
 
-    sections = re.split(r"(?=^##\s+)", text, flags=re.MULTILINE)
+    h1_match = re.search(r"^#\s+(.+)$", text, flags=re.MULTILINE)
+    document_title = h1_match.group(1).strip() if h1_match else "Knowledge Base"
 
-    chunks = []
+    # Remove the H1 from the body before splitting into H2 sections.
+    body = re.sub(r"^#\s+.+$", "", text, count=1, flags=re.MULTILINE).strip()
 
+    sections = re.split(r"(?=^##\s+)", body, flags=re.MULTILINE)
+    chunks: list[dict[str, str]] = []
+
+    # If the file has intro text before the first H2, keep it as a chunk.
     for section in sections:
-        section = clean_text(section)
-
+        section = section.strip()
         if not section:
             continue
 
-        if len(section) <= chunk_size:
-            chunks.append(section)
+        title = document_title
+        title_match = re.match(r"^##\s+(.+)$", section, flags=re.MULTILINE)
+        if title_match:
+            title = title_match.group(1).strip()
+            section_body = re.sub(r"^##\s+.+$", "", section, count=1, flags=re.MULTILINE).strip()
+        else:
+            section_body = section
+
+        section_body = strip_markdown(section_body)
+        if not section_body:
+            continue
+
+        full_text = f"{title}. {section_body}"
+
+        if len(full_text) <= chunk_size:
+            chunks.append({"title": title, "text": full_text, "body": section_body})
             continue
 
         start = 0
-        while start < len(section):
+        while start < len(section_body):
             end = start + chunk_size
-            chunk = section[start:end].strip()
-
-            if chunk:
-                chunks.append(chunk)
-
+            piece = section_body[start:end].strip()
+            if piece:
+                chunks.append({"title": title, "text": f"{title}. {piece}", "body": piece})
             start += chunk_size - overlap
 
     return chunks
+
 
 def load_knowledge_base() -> list[dict[str, str]]:
     documents = []
@@ -57,7 +126,7 @@ def load_knowledge_base() -> list[dict[str, str]]:
     if not KNOWLEDGE_BASE_DIR.exists():
         return documents
 
-    for path in KNOWLEDGE_BASE_DIR.glob("*.md"):
+    for path in sorted(KNOWLEDGE_BASE_DIR.glob("*.md")):
         content = path.read_text(encoding="utf-8")
         chunks = chunk_text(content)
 
@@ -66,7 +135,10 @@ def load_knowledge_base() -> list[dict[str, str]]:
                 {
                     "source": path.name,
                     "chunk_id": f"{path.name}-{index}",
-                    "text": chunk,
+                    "title": chunk["title"],
+                    "text": chunk["text"],
+                    "body": chunk["body"],
+                    "keywords": " ".join(sorted(tokenize(chunk["text"]))),
                 }
             )
 
@@ -98,7 +170,18 @@ def build_vector_index() -> dict[str, Any]:
     }
 
 
-def retrieve_context(question: str, top_k: int = 4) -> list[dict[str, Any]]:
+def keyword_overlap_score(question_terms: set[str], chunk_text_value: str) -> int:
+    chunk_terms = tokenize(chunk_text_value)
+    return len(question_terms.intersection(chunk_terms))
+
+
+def retrieve_context(question: str, top_k: int = TOP_K) -> list[dict[str, Any]]:
+    question = clean_text(question)
+    question_terms = tokenize(question)
+
+    if not question or not question_terms:
+        return []
+
     index = build_vector_index()
     documents = index["documents"]
     embeddings = index["embeddings"]
@@ -113,93 +196,106 @@ def retrieve_context(question: str, top_k: int = 4) -> list[dict[str, Any]]:
         normalize_embeddings=True,
     )
 
-    scores = cosine_similarity(question_embedding, embeddings)[0]
+    vector_scores = cosine_similarity(question_embedding, embeddings)[0]
 
-    ranked_indices = np.argsort(scores)[::-1][:top_k]
+    candidates = []
+    for idx, doc in enumerate(documents):
+        vector_score = float(vector_scores[idx])
+        overlap = keyword_overlap_score(question_terms, doc["text"])
 
-    results = []
+        # Boost exact title matches such as "race pace", "DNF", "tire degradation".
+        title = doc.get("title", "").lower()
+        title_terms = tokenize(title)
+        title_overlap = len(question_terms.intersection(title_terms))
 
-    for idx in ranked_indices:
-        doc = documents[int(idx)]
-        results.append(
+        combined_score = vector_score + (overlap * 0.05) + (title_overlap * 0.08)
+
+        candidates.append(
             {
                 "source": doc["source"],
                 "chunk_id": doc["chunk_id"],
+                "title": doc["title"],
                 "text": doc["text"],
-                "score": float(scores[idx]),
+                "body": doc["body"],
+                "score": vector_score,
+                "keyword_overlap": overlap,
+                "combined_score": combined_score,
             }
         )
 
-    return results
+    candidates.sort(key=lambda item: item["combined_score"], reverse=True)
+
+    # Relevance gate: vector similarity alone is not enough, because embeddings always
+    # return nearest neighbors even for unrelated questions.
+    relevant = [
+        item
+        for item in candidates
+        if item["score"] >= MIN_VECTOR_SCORE and item["keyword_overlap"] >= MIN_KEYWORD_OVERLAP
+    ]
+
+    return relevant[:top_k]
+
+
+def has_enough_context(retrieved_chunks: list[dict[str, Any]]) -> bool:
+    if not retrieved_chunks:
+        return False
+
+    best = retrieved_chunks[0]
+    return (
+        best.get("score", 0.0) >= MIN_VECTOR_SCORE
+        and best.get("keyword_overlap", 0) >= MIN_KEYWORD_OVERLAP
+    )
+
+
+def sentence_split(text: str) -> list[str]:
+    sentences = re.split(r"(?<=[.!?])\s+", strip_markdown(text))
+    return [sentence.strip() for sentence in sentences if sentence.strip()]
 
 
 def build_fallback_answer(question: str, retrieved_chunks: list[dict[str, Any]]) -> str:
-    if not retrieved_chunks:
-        return (
-            "I could not find enough relevant information in the RaceMind AI "
-            "knowledge base to answer this question yet."
-        )
+    if not has_enough_context(retrieved_chunks):
+        return OUT_OF_SCOPE_ANSWER
 
-    question_lower = question.lower()
-    combined_context = "\n\n".join(chunk["text"] for chunk in retrieved_chunks)
-
-    # Split context into short sentence-like units.
-    sentences = re.split(r"(?<=[.!?])\s+", combined_context)
-
-    # Remove markdown headings and empty lines.
-    cleaned_sentences = []
-    for sentence in sentences:
-        sentence = re.sub(r"#+\s*", "", sentence).strip()
-        sentence = sentence.replace("\n", " ").strip()
-
-        if sentence:
-            cleaned_sentences.append(sentence)
-
-    # Simple keyword scoring to choose only the most relevant sentences.
-    stopwords = {
-        "what", "is", "are", "the", "a", "an", "of", "in", "on", "for", "to",
-        "and", "or", "with", "why", "how", "explain", "difference", "between",
-        "important", "motogp", "motorcycle", "racing"
-    }
-
-    question_terms = {
-        term
-        for term in re.findall(r"[a-zA-Z0-9]+", question_lower)
-        if term not in stopwords and len(term) > 2
-    }
+    question_terms = tokenize(question)
+    best_chunk = retrieved_chunks[0]
 
     scored_sentences = []
+    for chunk in retrieved_chunks:
+        for sentence in sentence_split(chunk.get("body") or chunk["text"]):
+            sentence_terms = tokenize(sentence)
+            overlap = len(question_terms.intersection(sentence_terms))
+            if overlap > 0:
+                scored_sentences.append((overlap, chunk["score"], sentence))
 
-    for sentence in cleaned_sentences:
-        sentence_lower = sentence.lower()
-        score = sum(1 for term in question_terms if term in sentence_lower)
+    scored_sentences.sort(key=lambda item: (item[0], item[1]), reverse=True)
 
-        if score > 0:
-            scored_sentences.append((score, sentence))
+    selected_sentences: list[str] = []
+    seen = set()
 
-    scored_sentences.sort(key=lambda item: item[0], reverse=True)
+    for _, _, sentence in scored_sentences:
+        normalized = sentence.lower()
+        if normalized in seen:
+            continue
+        selected_sentences.append(sentence)
+        seen.add(normalized)
+        if len(selected_sentences) >= 2:
+            break
 
-    selected_sentences = [sentence for _, sentence in scored_sentences[:3]]
-
-    # Fallback if keyword scoring finds nothing useful.
     if not selected_sentences:
-        selected_sentences = cleaned_sentences[:2]
+        selected_sentences = sentence_split(best_chunk.get("body") or best_chunk["text"])[:2]
 
-    concise_answer = " ".join(selected_sentences)
+    concise_answer = " ".join(selected_sentences).strip()
 
-    # Keep answer short and readable.
-    if len(concise_answer) > 700:
-        concise_answer = concise_answer[:700].rsplit(" ", 1)[0] + "."
+    if len(concise_answer) > 450:
+        concise_answer = concise_answer[:450].rsplit(" ", 1)[0].rstrip(".,;:") + "."
 
-    return (
-        f"{concise_answer}\n\n"
-        "Source: RaceMind AI knowledge base."
-    )
+    return f"{concise_answer}\n\nSource: RaceMind AI knowledge base."
+
 
 def answer_with_openai(question: str, retrieved_chunks: list[dict[str, Any]]) -> str | None:
     api_key = os.getenv("OPENAI_API_KEY")
 
-    if not api_key:
+    if not api_key or not has_enough_context(retrieved_chunks):
         return None
 
     try:
@@ -209,52 +305,52 @@ def answer_with_openai(question: str, retrieved_chunks: list[dict[str, Any]]) ->
 
         context = "\n\n".join(
             [
-                f"Source: {chunk['source']}\n{chunk['text']}"
+                f"Source: {chunk['source']}\nTitle: {chunk['title']}\nText: {chunk['body']}"
                 for chunk in retrieved_chunks
             ]
         )
-
-        prompt = f"""
-You are RaceMind AI, an expert MotoGP and motorcycle racing assistant.
-
-Answer the user's question using the provided context.
-If the context is not enough, say that the RaceMind AI knowledge base does not contain enough information yet.
-Keep the answer clear, technical when useful, and beginner-friendly.
-
-Context:
-{context}
-
-Question:
-{question}
-"""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are RaceMind AI, a MotoGP and motorcycle racing assistant.",
+                    "content": (
+                        "You are RaceMind AI, a MotoGP and motorcycle racing assistant. "
+                        "Answer only from the provided RaceMind AI knowledge base context. "
+                        "If the context does not answer the question, say the knowledge base "
+                        "does not contain enough information yet. Keep answers concise: 1-3 sentences. "
+                        "Do not include markdown headings. Do not invent facts."
+                    ),
                 },
                 {
                     "role": "user",
-                    "content": prompt,
+                    "content": f"Context:\n{context}\n\nQuestion:\n{question}",
                 },
             ],
-            temperature=0.4,
+            temperature=0.2,
+            max_tokens=180,
         )
 
-        return response.choices[0].message.content
+        answer = response.choices[0].message.content or ""
+        return strip_markdown(answer)
 
-    except Exception as exc:
-        return (
-            "OpenAI generation failed, so RaceMind AI used the local retrieved context instead.\n\n"
-            + build_fallback_answer(question, retrieved_chunks)
-            + f"\n\nInternal note: {str(exc)}"
-        )
+    except Exception:
+        # Do not expose internal API errors to the frontend user.
+        return None
 
 
 def answer_question(question: str) -> dict[str, Any]:
+    question = clean_text(question)
     retrieved_chunks = retrieve_context(question)
+
+    if not has_enough_context(retrieved_chunks):
+        return {
+            "answer": OUT_OF_SCOPE_ANSWER,
+            "sources": [],
+            "retrieval_mode": "out_of_scope",
+            "matches": [],
+        }
 
     openai_answer = answer_with_openai(question, retrieved_chunks)
 
@@ -274,7 +370,9 @@ def answer_question(question: str) -> dict[str, Any]:
         "matches": [
             {
                 "source": chunk["source"],
+                "title": chunk["title"],
                 "score": round(chunk["score"], 4),
+                "keyword_overlap": chunk["keyword_overlap"],
             }
             for chunk in retrieved_chunks
         ],
