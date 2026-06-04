@@ -11,7 +11,8 @@ from app.services.data_service import (
     get_dashboard_summary,
     get_rider_stats,
     compare_riders,
-    get_rider_trends
+    get_rider_trends,
+    get_race_detail
 )
 
 
@@ -90,3 +91,7 @@ def ml_predict(request: PredictionRequest):
 @app.get("/stats/rider/{rider_name}/trends")
 def rider_trends(rider_name: str):
     return get_rider_trends(rider_name)
+
+@app.get("/race/{year}/{event_name}")
+def race_detail(year: int, event_name: str):
+    return get_race_detail(year, event_name)

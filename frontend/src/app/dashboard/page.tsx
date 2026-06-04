@@ -99,19 +99,19 @@ export default function DashboardPage() {
                 />
 
                 <Tooltip
-                contentStyle={{
-                    backgroundColor: "#09090b",
-                    border: "1px solid #27272a",
-                    borderRadius: "12px",
-                    color: "#ffffff",
-                }}
-                labelStyle={{
-                    color: "#ffffff",
-                }}
-                cursor={{
-                    fill: "rgba(220, 38, 38, 0.08)",
-                }}
-                />
+                  contentStyle={{
+                      backgroundColor: "#09090b",
+                      border: "1px solid #27272a",
+                      borderRadius: "12px",
+                      color: "#ffffff",
+                  }}
+                  labelStyle={{
+                      color: "#ffffff",
+                  }}
+                  cursor={{
+                      fill: "rgba(220, 38, 38, 0.08)",
+                  }}
+                  />
 
                 <Bar dataKey="points" fill="#dc2626" radius={[8, 8, 0, 0]} />
             </BarChart>
