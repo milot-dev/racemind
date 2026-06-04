@@ -444,7 +444,7 @@ npm run dev
 Frontend URL:
 
 ```txt
-http://localhost:3000
+http://localhost:3001
 ```
 
 Create:
