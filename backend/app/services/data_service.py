@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 import pandas as pd
+import math
 
 from app.config import DATA_PATH
 
@@ -290,4 +291,115 @@ def compare_riders(rider_a: str, rider_b: str):
         "rider_a": stats_a,
         "rider_b": stats_b,
         "insights": insights,
+    }
+
+def get_rider_trends(rider_name: str):
+    df = load_race_results()
+
+    rider_df = df[
+        df["rider"].astype(str).str.lower() == rider_name.lower()
+    ].copy()
+
+    if rider_df.empty:
+        return {
+            "error": f"Rider '{rider_name}' was not found."
+        }
+
+    rider_df["finish_position"] = pd.to_numeric(
+        rider_df["finish_position"],
+        errors="coerce"
+    )
+
+    rider_df["points"] = pd.to_numeric(
+        rider_df["points"],
+        errors="coerce"
+    ).fillna(0)
+
+    rider_df["grid_position"] = pd.to_numeric(
+        rider_df["grid_position"],
+        errors="coerce"
+    )
+
+    yearly = []
+
+    for year, group in rider_df.groupby("year"):
+        valid_finishes = group.dropna(subset=["finish_position"])
+
+        avg_finish = (
+            float(valid_finishes["finish_position"].mean())
+            if not valid_finishes.empty
+            else None
+        )
+
+        avg_grid = (
+            float(group["grid_position"].mean())
+            if group["grid_position"].notna().any()
+            else None
+        )
+
+        yearly.append({
+            "year": int(year),
+            "entries": int(len(group)),
+            "wins": int((group["finish_position"] == 1).sum()),
+            "podiums": int((group["finish_position"] <= 3).sum()),
+            "top_10s": int((group["finish_position"] <= 10).sum()),
+            "dnfs": int(
+                group["status"]
+                .astype(str)
+                .str.upper()
+                .isin(["DNF", "DNS", "RET", "DSQ", "NC", "RETIRED"])
+                .sum()
+            ),
+            "total_points": float(group["points"].sum()),
+            "average_finish": to_json_safe(avg_finish),
+            "average_grid": to_json_safe(avg_grid),
+        })
+
+    yearly = sorted(yearly, key=lambda item: item["year"])
+
+    team_history = (
+        rider_df[["year", "team"]]
+        .dropna()
+        .drop_duplicates()
+        .sort_values(["year", "team"])
+        .to_dict(orient="records")
+    )
+
+    recent = rider_df.sort_values(
+        ["year", "event_name"],
+        ascending=[False, True]
+    ).head(15)
+
+    recent_results = recent[[
+        "year",
+        "event_name",
+        "session_type",
+        "team",
+        "grid_position",
+        "finish_position",
+        "points",
+        "status",
+    ]].copy()
+
+    recent_results = recent_results.where(
+        pd.notna(recent_results),
+        None
+    )
+
+    recent_results = recent_results.to_dict(orient="records")
+
+    # Final safety pass: remove any remaining NaN values
+    for row in recent_results:
+        for key, value in row.items():
+            row[key] = to_json_safe(value)
+
+    for row in team_history:
+        for key, value in row.items():
+            row[key] = to_json_safe(value)
+
+    return {
+        "rider": rider_df["rider"].iloc[0],
+        "team_history": team_history,
+        "yearly_trends": yearly,
+        "recent_results": recent_results,
     }

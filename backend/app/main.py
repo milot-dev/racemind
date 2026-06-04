@@ -11,6 +11,7 @@ from app.services.data_service import (
     get_dashboard_summary,
     get_rider_stats,
     compare_riders,
+    get_rider_trends
 )
 
 
@@ -85,3 +86,7 @@ def ai_commentary(request: CommentaryRequest):
 @app.post("/ml/predict")
 def ml_predict(request: PredictionRequest):
     return predict_performance(request)
+
+@app.get("/stats/rider/{rider_name}/trends")
+def rider_trends(rider_name: str):
+    return get_rider_trends(rider_name)

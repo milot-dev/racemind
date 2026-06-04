@@ -27,3 +27,13 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
 
   return response.json();
 }
+
+export async function getRiderStats<T>(riderName: string): Promise<T> {
+  return apiGet<T>(`/stats/rider/${encodeURIComponent(riderName)}`);
+}
+
+export async function getRiderTrends<T>(riderName: string): Promise<T> {
+  return apiGet<T>(
+    `/stats/rider/${encodeURIComponent(riderName)}/trends`
+  );
+}
