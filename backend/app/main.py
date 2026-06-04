@@ -12,7 +12,8 @@ from app.services.data_service import (
     get_rider_stats,
     compare_riders,
     get_rider_trends,
-    get_race_detail
+    get_race_detail,
+    get_all_races
 )
 
 
@@ -95,3 +96,7 @@ def rider_trends(rider_name: str):
 @app.get("/race/{year}/{event_name}")
 def race_detail(year: int, event_name: str):
     return get_race_detail(year, event_name)
+
+@app.get("/races")
+def races():
+    return get_all_races()

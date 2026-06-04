@@ -538,3 +538,31 @@ def get_race_detail(year: int, event_name: str):
         "team_points": team_points,
         "ai_summary": ai_summary,
     }
+
+def get_all_races():
+    df = load_race_results().copy()
+
+    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+
+    race_columns = ["year", "event_name", "circuit"]
+
+    races_df = (
+        df[race_columns]
+        .dropna(subset=["year", "event_name"])
+        .drop_duplicates()
+        .sort_values(["year", "event_name"], ascending=[False, True])
+    )
+
+    races = races_df.to_dict(orient="records")
+
+    for row in races:
+        for key, value in row.items():
+            row[key] = to_json_safe(value)
+
+        if row.get("year") is not None:
+            row["year"] = int(row["year"])
+
+    return {
+        "races": races,
+        "count": len(races),
+    }
